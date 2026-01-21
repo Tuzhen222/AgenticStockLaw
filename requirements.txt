@@ -1,0 +1,28 @@
+# A2A SDK and Core Dependencies
+a2a-sdk[server]>=0.2.0
+langgraph>=0.2.0
+langchain>=0.3.0
+langchain-core>=0.3.0
+langchain-openai>=0.2.0
+langchain-text-splitters>=0.3.0
+openai>=1.0.0
+mcp>=1.0.0
+cohere>=5.0.0
+
+# Vector DB and Embeddings
+qdrant-client>=1.7.0
+tritonclient[grpc]>=2.40.0
+
+# Web/API
+fastapi>=0.109.0
+uvicorn>=0.27.0
+httpx>=0.26.0
+pydantic>=2.5.0
+
+# Memory
+redis>=5.0.0
+asyncpg>=0.29.0
+
+# Utilities
+python-dotenv>=1.0.0
+tenacity>=8.2.0

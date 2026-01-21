@@ -1,0 +1,212 @@
+# Development mode with hot reload
+# Usage: 
+#   docker-compose -f docker-compose.dev.yml --profile cpu up -d  (CPU Triton)
+#   docker-compose -f docker-compose.dev.yml --profile gpu up -d  (GPU Triton)
+#   docker-compose -f docker-compose.dev.yml up -d                (No Triton)
+
+services:
+  # AI Gateway - Public Entry Point (with hot reload)
+  gateway:
+    build:
+      context: ..
+      dockerfile: ai/Dockerfile
+    command: uvicorn ai.gateway:create_app --factory --host 0.0.0.0 --port 9200 --reload --reload-dir /app/ai/routers --reload-dir /app/ai/services --reload-dir /app/ai/schemas
+    ports:
+      - "9200:9200" # Public - Backend connects here
+    env_file:
+      - .env
+    environment:
+      - ORCHESTRATOR_URL=http://orchestrator:9100
+      - QDRANT_HOST=qdrant
+      - QDRANT_PORT=6334
+      - TRITON_URL=triton-gpu:8001
+      - BRIGHTDATA_MCP_TOKEN=${BRIGHTDATA_MCP_TOKEN}
+      - VALIDATION_AGENT_URL=http://validation:9102
+      - REGULATORY_AGENT_URL=http://regulatory_update:9103
+      - KNOWLEDGE_AGENT_URL=http://knowledge:9101
+    volumes:
+      - .:/app/ai # Mount source code for hot reload
+    depends_on:
+      - qdrant
+      - validation
+      - knowledge
+      - regulatory_update
+    restart: unless-stopped
+    networks:
+      - agent-network
+
+  # MCP Tools (Internal)
+  retrieve:
+    build:
+      context: ..
+      dockerfile: ai/Dockerfile
+    command: python -m ai.main retrieve
+    ports:
+      - "127.0.0.1:8100:8100"
+    env_file:
+      - .env
+    environment:
+      - QDRANT_HOST=qdrant
+      - TRITON_URL=triton-cpu:8001
+    volumes:
+      - .:/app/ai
+    depends_on:
+      - qdrant
+    restart: unless-stopped
+    networks:
+      - agent-network
+
+  rerank:
+    build:
+      context: ..
+      dockerfile: ai/Dockerfile
+    command: python -m ai.main rerank
+    ports:
+      - "127.0.0.1:8101:8101"
+    env_file:
+      - .env
+    volumes:
+      - .:/app/ai
+    restart: unless-stopped
+    networks:
+      - agent-network
+
+  # A2A Agents (Internal)
+  orchestrator:
+    build:
+      context: ..
+      dockerfile: ai/Dockerfile
+    command: python -m ai.main orchestrator
+    ports:
+      - "127.0.0.1:9100:9100"
+    env_file:
+      - .env
+    environment:
+      - KNOWLEDGE_AGENT_URL=http://knowledge:9101
+      - VALIDATION_AGENT_URL=http://validation:9102
+      - REGULATORY_UPDATE_AGENT_URL=http://regulatory_update:9103
+    volumes:
+      - .:/app/ai
+    depends_on:
+      - knowledge
+      - validation
+      - regulatory_update
+    restart: unless-stopped
+    networks:
+      - agent-network
+
+  knowledge:
+    build:
+      context: ..
+      dockerfile: ai/Dockerfile
+    command: python -m ai.main knowledge
+    ports:
+      - "127.0.0.1:9101:9101"
+    env_file:
+      - .env
+    environment:
+      - VALIDATION_AGENT_URL=http://validation:9102
+      - REGULATORY_UPDATE_AGENT_URL=http://regulatory_update:9103
+      - RETRIEVE_MCP_URL=http://retrieve:8100
+      - RERANK_MCP_URL=http://rerank:8101
+    volumes:
+      - .:/app/ai
+    depends_on:
+      - retrieve
+      - rerank
+      - validation
+      - regulatory_update
+    restart: unless-stopped
+    networks:
+      - agent-network
+
+  validation:
+    build:
+      context: ..
+      dockerfile: ai/Dockerfile
+    command: python -m ai.main validation
+    ports:
+      - "127.0.0.1:9102:9102"
+    env_file:
+      - .env
+    volumes:
+      - .:/app/ai
+    restart: unless-stopped
+    networks:
+      - agent-network
+
+  regulatory_update:
+    build:
+      context: ..
+      dockerfile: ai/Dockerfile
+    command: python -m ai.main regulatory_update
+    ports:
+      - "127.0.0.1:9103:9103"
+    env_file:
+      - .env
+    volumes:
+      - .:/app/ai
+    restart: unless-stopped
+    networks:
+      - agent-network
+
+  # Infrastructure Services
+  # Triton with GPU
+  triton-gpu:
+    image: nvcr.io/nvidia/tritonserver:24.08-py3
+    command: tritonserver --model-repository=/models --http-port=8000 --grpc-port=8001 --metrics-port=8002
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+    volumes:
+      - ../triton_server/model_repository:/models:ro
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [ gpu ]
+    restart: unless-stopped
+    networks:
+      - agent-network
+    profiles:
+      - gpu
+
+  # Triton CPU only
+  triton-cpu:
+    image: nvcr.io/nvidia/tritonserver:24.08-py3
+    command: tritonserver --model-repository=/models --http-port=8000 --grpc-port=8001 --metrics-port=8002
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+      - "8002:8002"
+    volumes:
+      - ../triton_server/model_repository:/models:ro
+    restart: unless-stopped
+    networks:
+      - agent-network
+    profiles:
+      - cpu
+
+  # Qdrant Vector Database
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    restart: unless-stopped
+    networks:
+      - agent-network
+
+networks:
+  agent-network:
+    driver: bridge
+
+volumes:
+  qdrant_storage:

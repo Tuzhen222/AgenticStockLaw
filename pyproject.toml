@@ -1,0 +1,36 @@
+[project]
+name = "agentic-stock-law"
+version = "0.1.0"
+description = "Agentic Stock Law Platform"
+requires-python = ">=3.10"
+dependencies = [
+    # AI/ML dependencies
+    "qdrant-client>=1.7.0",
+    "tritonclient[grpc]>=2.40.0",
+    "transformers>=4.36.0",
+    "numpy>=1.24.0",
+    "grpcio>=1.60.0",
+    # Model conversion
+    "torch>=2.1.0",
+    "onnx>=1.15.0",
+    "onnxruntime>=1.16.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.uv]
+dev-dependencies = [
+    "pytest>=7.4.0",
+    "black>=23.0.0",
+    "ruff>=0.1.0",
+]
