@@ -7,6 +7,7 @@ import json
 from pathlib import Path
 from typing import Iterator
 import numpy as np
+import os
 
 import tritonclient.grpc as grpcclient
 from transformers import AutoTokenizer
@@ -26,7 +27,7 @@ BGE_M3_MODEL_ID = "BAAI/bge-m3"
 # Triton configuration
 TRITON_HOST = "localhost"
 TRITON_GRPC_PORT = 8001
-MODEL_NAME = "bge_m3_tensorrt"
+MODEL_NAME = os.getenv("EMBEDDING_MODEL", "bge_m3_onnx")  # Default to ONNX
 MAX_SEQ_LENGTH = 512
 BATCH_SIZE = 8
 

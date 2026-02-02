@@ -40,11 +40,10 @@ def convert_to_onnx(
     
     onnx_path = version_dir / "model.onnx"
     
-    print(f"Loading tokenizer from: {tokenizer_dir}")
-    print(f"Loading model from HuggingFace...")
+    print(f"Loading tokenizer and model from HuggingFace (BAAI/bge-m3)...")
     
-    # Load tokenizer and model
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir)
+    # Load tokenizer and model from HuggingFace
+    tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-m3")
     model = AutoModel.from_pretrained("BAAI/bge-m3")
     
     # Load saved weights if available
@@ -153,8 +152,8 @@ def verify_onnx_model(model_repository: Path = MODEL_REPOSITORY) -> bool:
     
     print(f"\nVerifying ONNX model: {onnx_path}")
     
-    # Load PyTorch model
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_dir)
+    # Load PyTorch model from HuggingFace
+    tokenizer = AutoTokenizer.from_pretrained("BAAI/bge-m3")
     pytorch_model = AutoModel.from_pretrained("BAAI/bge-m3")
     
     pytorch_weights = model_repository / "bge_m3" / "1" / "model.pt"

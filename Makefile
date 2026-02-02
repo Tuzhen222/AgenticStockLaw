@@ -189,7 +189,7 @@ run-all:
 	@echo "🚀 Starting complete development setup..."
 	@echo ""
 	@echo "🔥 [1/5] Starting all services with GPU Triton..."
-	docker-compose -f docker-compose.dev.yml --profile with-triton-gpu up -d
+	docker-compose -f docker-compose.dev.yml --profile with-triton-cpu up -d
 	@echo ""
 	@echo "⏳ Waiting for services to start..."
 	@sleep 15

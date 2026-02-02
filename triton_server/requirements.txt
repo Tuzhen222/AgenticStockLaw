@@ -2,6 +2,7 @@
 transformers>=4.35.0
 torch>=2.0.0
 numpy>=1.24.0
+sentencepiece>=0.1.99
 
 # ONNX conversion
 onnx>=1.14.0
@@ -9,8 +10,8 @@ onnxruntime>=1.16.0
 
 # TensorRT conversion (requires NVIDIA GPU)
 # Install TensorRT from NVIDIA: https://developer.nvidia.com/tensorrt
-tensorrt>=8.6.0
-pycuda>=2022.2
+# tensorrt>=8.6.0
+# pycuda>=2022.2
 
 # Triton client (optional, for testing)
 tritonclient[all]>=2.40.0

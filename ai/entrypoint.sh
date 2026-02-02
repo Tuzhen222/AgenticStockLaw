@@ -37,7 +37,3 @@ python knowledge/vector_db/ingest.py \
 echo "=========================================="
 echo "✅ Ingestion Complete"
 echo "=========================================="
-
-
-
-
